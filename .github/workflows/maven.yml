@@ -42,6 +42,7 @@ jobs:
       run: |
         docker run -d --name java-app \
           ${{ secrets.DOCKER_USERNAME }}/java-app:latest
-        docker ps
+        docker ps -a
         docker logs java-app
+
 
