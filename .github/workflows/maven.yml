@@ -38,15 +38,10 @@ jobs:
       run: docker push ${{ secrets.DOCKER_USERNAME }}/java-app:latest
 
     # 7️⃣ Deploy on Ubuntu Server
-    - name: Deploy on Ubuntu
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.UBUNTU_HOST }}
-        username: ${{ secrets.UBUNTU_USER }}
-        key: ${{ secrets.UBUNTU_SSH_KEY }}
-        script: |
-          docker pull ${{ secrets.DOCKER_USERNAME }}/java-app:latest
-          docker stop java-app || true
-          docker rm java-app || true
-          docker run -d --name java-app ${{ secrets.DOCKER_USERNAME }}/java-app:latest
+    - name: Run Docker Container on Runner
+      run: |
+        docker run -d --name java-app \
+          ${{ secrets.DOCKER_USERNAME }}/java-app:latest
+        docker ps
+        docker logs java-app
 
