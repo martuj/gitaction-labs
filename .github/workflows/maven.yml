@@ -1,0 +1,52 @@
+name: Java Docker CI-CD
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-push-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1️⃣ Checkout Code
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # 2️⃣ Setup Java
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+
+    # 3️⃣ Build Java App
+    - name: Build with Maven
+      run: mvn clean package
+
+    # 4️⃣ Login to Docker Hub
+    - name: Docker Login
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+    # 5️⃣ Build Docker Image
+    - name: Build Docker Image
+      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/java-app:latest .
+
+    # 6️⃣ Push Docker Image
+    - name: Push Docker Image
+      run: docker push ${{ secrets.DOCKER_USERNAME }}/java-app:latest
+
+    # 7️⃣ Deploy on Ubuntu Server
+    - name: Deploy on Ubuntu
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.UBUNTU_HOST }}
+        username: ${{ secrets.UBUNTU_USER }}
+        key: ${{ secrets.UBUNTU_SSH_KEY }}
+        script: |
+          docker pull ${{ secrets.DOCKER_USERNAME }}/java-app:latest
+          docker stop java-app || true
+          docker rm java-app || true
+          docker run -d --name java-app ${{ secrets.DOCKER_USERNAME }}/java-app:latest
+
